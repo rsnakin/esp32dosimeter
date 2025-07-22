@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html class="notranslate">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="google" content="notranslate">
+    <title>&#9762; esp32dosimeter</title>
+    <style>
+        .navbar {
+            visibility: hidden;
+        }
+        .page {
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light navbar-expand-lg fixed-top bg-success clean-navbar" style="background: rgb(25, 135, 84);">
+        <div class="container"><a class="navbar-brand fw-semibold logo" href="/" 
+            style="color: rgba(255,255,255,0.9);"><img src="/assets/imgs/rad.png"> esp32dosimeter</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navcol-1">-=MENU=-</div>
+        </div>
+    </nav>
+    <main class="page landing-page">
+        <section class="clean-block features">
+            <div class="container" style="margin-bottom:0px;">
+                <div class="block-heading" style="padding-bottom:0px;margin-bottom:0px;">
+                    <span id="time" style="font-size:2em;font-family:monospace;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                </div>
+            </div>
+            <div class="container py-4 py-xl-5" style="padding-top:0px;">
+                <div class="text-center text-white-50 bg-secondary border rounded border-0 p-3">
+                    <div class="row row-cols-2 row-cols-md-4">
+                        <div class="col">
+                            <div class="p-3" style="text-align:text-center">
+                                <div id="rStatic"></div>
+                                <div style="font-weight:bold;">RADIATION:STATIC</div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="p-3" style="text-align:text-center">
+                                <div id="rDynamic"></div>
+                                <div style="font-weight:bold;">RADIATION:DYNAMIC</div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="p-3" style="text-align:text-center">
+                                <div id="voltage""></div>
+                                <div style="font-weight:bold;">VOLTAGE</div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="p-3" style="text-align:text-center">
+                                <div id="wifi""></div>
+                                <div id="ssid" style="font-weight:bold;">WIFI</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="height:5px;"></div>
+                <div class="progress bg-secondary" style="height:25px;">
+                    <div id="progress-bar" class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                        role="progressbar" style="width:0%;font-weight:bold;"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+<script>
+var updatePeriod = 20000;
+var updateInterval;
+var updateBarInterval;
+var rDynamic;
+var rStatic;
+var voltage;
+var wifi;
+function getData() {
+    $.ajax({
+        url:      '/api_data',
+        type:     'GET',
+        dataType: 'json',
+        timeout:  5000,
+        success: function (resp) {
+            $('#ssid').text(resp.ssid);
+            rDynamic.refresh(parseFloat(resp.rDynamic));
+            rStatic.refresh(parseFloat(resp.rStatic));
+            voltage.refresh(parseFloat(resp.voltage));
+            wifi.refresh(parseFloat(resp.wifi));
+            $('#time').fadeOut(200, function () {
+                $(this).text(tsToLocal(resp.time, false)).fadeIn(200);
+            });
+            progressBar(true);
+        },
+        error: function (xhr, status, err) {
+            const modalEl = document.getElementById('modal-1');
+            const myModal = new bootstrap.Modal(modalEl);
+            $('#modTitle').text('Error!');
+            $('#modContent').html('Error: ' + err);
+            clearInterval(updateInterval);
+            progressBar(false);
+            myModal.show();
+            modalEl.addEventListener('hidden.bs.modal', (event) => {
+                getData();
+                updateInterval = setInterval(function() {
+                    getData();
+                }, updatePeriod);
+            }, {once:true});
+        },
+        complete: function () {
+            ;
+        }
+    });
+}
+function progressBar(start) {
+    clearInterval(updateBarInterval);
+    if(!start) return;
+    let waitInterval = parseInt(updatePeriod / 1000);
+    let progress = 0;
+    const progressBar = document.getElementById('progress-bar');
+    let waitSec = waitInterval - progress;
+    progressBar.style.width = parseInt(progress * 100. / waitInterval) + '%';
+    progressBar.textContent = '';
+    updateBarInterval = setInterval(() => {
+        if (progress >= waitInterval) {
+            progress = 0;
+        }
+        progress += 1;
+        waitSec = waitInterval - progress;
+        let pWidth = parseInt(progress * 100. / waitInterval);
+        progressBar.style.width  = pWidth + '%';
+        if(pWidth >= 25) {
+            progressBar.textContent = waitSec + 's until update';
+        } else {
+            progressBar.textContent = waitSec + 's';
+        }
+    }, 1000);
+}
+function startPage() {
+    createNavBar();
+    createModalWindow();
+    rDynamic = new JustGage({
+        id: "rDynamic",
+        gaugeWidthScale: 1.5,
+        value: 0,
+        min: 0,
+        max: 1,
+        label: "µSv/h",
+        pointer: true,
+        formatNumber: true,
+        levelColors: ["43bf58", "#79bf43", "fb5b11"],
+        textRenderer: function (val) {
+                    return val.toFixed(2);
+        },
+        pointerOptions: {color: "#cccccc"}
+    });
+
+    rStatic = new JustGage({
+        id: "rStatic",
+        gaugeWidthScale: 1.5,
+        value: 0,
+        min: 0,
+        max: 1,
+        label: "µSv/h",
+        pointer: true,
+        formatNumber: true,
+        levelColors: ["43bf58", "#79bf43", "fb5b11"],
+        textRenderer: function (val) {
+                    return val.toFixed(2);
+        },
+        pointerOptions: {color: "#cccccc"},
+    });
+
+    voltage = new JustGage({
+        id: "voltage",
+        gaugeWidthScale: 1.5,
+        value: 0,
+        min: 2.3,
+        max: 4.3,
+        label: "V",
+        pointer: true,
+        formatNumber: true,
+        textRenderer: function (val) {
+                    return val.toFixed(2);
+        },
+        levelColors: ["#ff3b30", "#43bf58", "#ff3b30"],
+        gaugeColor: "#e0e0e0",
+        pointerOptions: {color: "#cccccc"},
+    });
+
+    wifi = new JustGage({
+        id: "wifi",
+        gaugeWidthScale: 1.5,
+        value: -100,
+        min: -100,
+        max: 0,
+        label: "dBm",
+        pointer: true,
+        formatNumber: true,
+        textRenderer: function (val) {
+                    return val.toFixed(0);
+        },
+        levelColors: ["#ff3b30", "#43bf58", "#43bf58"],
+        gaugeColor: "#e0e0e0",
+        pointerOptions: {color: "#cccccc"}
+    });
+    getData();
+    updateInterval = setInterval(function() {
+        getData();
+    }, updatePeriod);
+    document.querySelector('.page').style.visibility = 'visible';
+};
+</script>
+<script src="/assets/js/load_assets.js"></script>
+</body>
+</html>

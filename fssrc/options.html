@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html class="notranslate">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="google" content="notranslate">
+    <title>&#9762; esp32dosimeter</title>
+    <style>
+        .navbar {
+            visibility: hidden;
+        }
+        .page {
+            visibility: hidden;
+        }
+        input {
+            font-weight: bold;
+            color: var(--bs-green);
+            border: 1px solid rgb(25, 135, 84);
+            text-align: center;
+        }
+        input:focus {
+            box-shadow: 0 0 6px 0.4rem rgba(40, 167, 69, 0.25) !important;
+        }
+        #saveOptions:focus {
+            box-shadow: 0 0 6px 0.4rem rgba(40, 167, 69, 0.25) !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light navbar-expand-lg fixed-top bg-success clean-navbar" style="background: rgb(25, 135, 84);">
+        <div class="container"><a class="navbar-brand fw-semibold logo" href="/" 
+            style="color: rgba(255,255,255,0.9);"><img src="/assets/imgs/rad.png"> esp32dosimeter</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navcol-1">-=MENU=-</div>
+        </div>
+    </nav>
+    <main class="page">
+        <section class="clean-block features">
+            <div class="container">
+                <div class="block-heading" style="padding-top:30px;">
+                    <h2 class="text-info"style="margin-bottom: -30px;">Options</h2>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table width="100%">
+                     <tbody>
+                        <tr><td colspan="3">&nbsp;</td></tr>
+                        <tr>
+                            <td class="fw-bold" 
+                            style="text-align: right;width: 50%;padding: 8px;padding-top: 11px;">Owner chat id &#128100;</td>
+                            <td style="width: 50%;"><input class="rounded-pill" type="text" 
+                                placeholder="Owner chat id" name="ownerChatId" id="ownerChatId"></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold" 
+                            style="text-align: right;width: 50%;padding: 8px;padding-top: 11px;">NTP-server &#128339;</td>
+                            <td style="width: 50%;"><input class="rounded-pill" type="text" id="NTPserver"
+                                placeholder="NTP-server" name="NTPserver"></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold" 
+                            style="text-align: right;width: 50%;padding: 8px;padding-top: 11px;">Radiation alert threshold &#128680;</td>
+                            <td style="width: 50%;"><input class="rounded-pill" type="text" id="RadAlertThold"
+                                placeholder="Rad alert" name="RadAlertThold"></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold" 
+                            style="text-align: right;width: 50%;padding: 8px;padding-top: 11px;">Voltage correction &#128268;</td>
+                            <td style="width: 50%;"><input class="rounded-pill" type="text" id="voltageCorrection"
+                                placeholder="Correction" name="voltageCorrection"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-center" colspan="2" style="padding:35px;">
+                                <button id="saveOptions" class="btn btn-primary bg-success rounded-pill" 
+                                    type="button">Save options</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+<script>
+function getData() {
+    $.ajax({
+        url:      '/api_config',
+        type:     'GET',
+        dataType: 'json',
+        timeout:  5000,
+        success: function (resp) {
+            $('#ownerChatId').val(resp.ownerChatId);
+            $('#NTPserver').val(resp.NTPserver);
+            $('#voltageCorrection').val(parseFloat(resp.voltageCorrection));
+            $('#RadAlertThold').val(parseFloat(resp.RadAlertThold));
+            $('#saveOptions').one('click', function() {
+                const myModal = new bootstrap.Modal(document.getElementById('modal-1'));
+                $('#modTitle').html('&#x2755; Information');
+                $('#modContent').html('Saving options...');
+                $('#modalBClose').hide();
+                $('#modalClose').hide();
+                myModal.show();
+                $.ajax({
+                    url: '/api_saveconfig',
+                    type: 'GET',
+                    data: {
+                        ownerChatId: $('#ownerChatId').val(),
+                        NTPserver: $('#NTPserver').val(),
+                        RadAlertThold: $('#RadAlertThold').val(),
+                        voltageCorrection: $('#voltageCorrection').val()
+                    },
+                    success: function(response) {
+                        if(response.status == 'OK') {
+                            $('#modContent').html('Saved successfully');
+                            $('#modalBClose').show();
+                            $('#modalClose').show();
+                        } else {
+                            $('#modTitle').text('Error!');
+                            $('#modContent').html('Error: ' + response.status);
+                            $('#modalBClose').show();
+                            $('#modalClose').show();
+                            myModal.show();                           
+                        }
+                        const modalEl = document.getElementById('modal-1');
+                        modalEl.addEventListener('hidden.bs.modal', (event) => {
+                            getData();
+                        }, {once:true});
+                    },
+                    error: function (xhr, status, err) {
+                        const myModal = new bootstrap.Modal(document.getElementById('modal-1'));
+                        myModal.hide();
+                        $('#modTitle').text('Error!');
+                        $('#modContent').html('Error: ' + err);
+                        $('#modalBClose').show();
+                        $('#modalClose').show();
+                        myModal.show();
+                    },
+                });
+            });
+        },
+        error: function (xhr, status, err) {
+            const myModal = new bootstrap.Modal(document.getElementById('modal-1'));
+            $('#modTitle').text('Error!');
+            $('#modContent').html('Error: ' + err);
+            $('#modalBClose').show();
+            $('#modalClose').show();
+            myModal.show();
+        },
+        complete: function () {
+            ;
+        }
+    });
+}
+function startPage() {
+    createNavBar();
+    createModalWindow();
+    getData();
+    document.querySelector('.page').style.visibility = 'visible';
+};
+</script>
+<script src="/assets/js/load_assets.js"></script>
+</body>
+</html>

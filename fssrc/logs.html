@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html class="notranslate">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="google" content="notranslate">
+    <title>&#9762; esp32dosimeter</title>
+    <style>
+    .navbar {
+            visibility: hidden;
+        }
+    .page {
+            visibility: hidden;
+        }
+    pre {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        max-height: 70vh;
+        overflow-y: auto;
+        font-family: monospace;
+    }
+    .log-info { color: #0e17d0; }
+    .log-error { color: #dc3545; font-weight: bold; }
+    .log-chatid { color: rgb(0, 142, 9); }
+    .log-start { color: rgb(112, 24, 179); font-weight: bold; }
+    .log-panic { color: #dc3545; font-weight: bold; }
+    .log-telegramAlert { color: rgb(182, 84, 14); font-weight: bold; }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-light navbar-expand-lg fixed-top bg-success clean-navbar" style="background: rgb(25, 135, 84);">
+        <div class="container"><a class="navbar-brand fw-semibold logo" href="/"
+            style="color: rgba(255,255,255,0.9);"><img src="/assets/imgs/rad.png"> esp32dosimeter</a><button 
+            data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navcol-1">-=MENU=-</div>
+        </div>
+    </nav>
+    <main class="page">
+        <section class="clean-block features" style="padding-bottom:0px;">
+            <div class="container">
+                <div class="block-heading" style="padding-top:30px;">
+                    <h2 id="logName" class="text-info">Log</h2>
+                </div>
+                <pre id="logOutput">Loading log...</pre>
+            </div>
+        </section>
+    </main>
+<script>
+var lastStringNumber = 0;
+var reloadInterval = 30000;
+function loadLog() {
+    let cData = getCurrentDateISO();
+    let logURL = '/api_log';
+    $('#logName').text('Log: ' + cData);
+    $.get(logURL + '?date=' + cData, function(data) {
+        let lines = data.split('\n');
+        let output = '';
+        let sNumber = 0;
+        lines.forEach(line => {
+            if(line.trim() != '') {
+                sNumber ++;
+                let newLine = ''; let _newLine = '';
+                if(sNumber > lastStringNumber && lastStringNumber != 0) {
+                    newLine = ' newLine';
+                    _newLine = 'newLine';
+                }
+                if (line.includes('error') || line.includes('Error') || (line.includes('Reset') && !line.includes('PANIC'))) {
+                    output += '<span class="log-error' + newLine + '" id="string_' + sNumber + '">' + line + '</span>';
+                } else if (line.includes('Delete')) {
+                    output += '<span class="log-info' + newLine + '" id="string_' + sNumber + '">' + line + '</span>';
+                } else if (line.includes('PANIC')) {
+                    output += '<span class="log-panic' + newLine + '" id="string_' + sNumber + '">' + line + '</span>';
+                } else if (line.includes('chat_id')) {
+                    output += '<span class="log-chatid' + newLine + '" id="string_' + sNumber + '">' + line + '</span>';
+                } else if (line.includes('started')) {
+                    output += '<span class="log-start' + newLine + '" id="string_' + sNumber + '">' + line + '</span>';
+                } else if (line.includes('telegramAlert')) {
+                    output += '<span class="log-telegramAlert' + newLine + '" id="string_' + sNumber + '">' + line + '</span>';
+                } else {
+                    output += '<span class="' + _newLine + '" id="string_' + sNumber + '">' + line + '</span>';
+                }
+            }
+        });
+        $("#logOutput").html(output);
+        let log = document.getElementById("logOutput");
+        log.scrollTop = log.scrollHeight;
+        if(lastStringNumber != sNumber && lastStringNumber != 0) {
+            let originalColors = [];
+            let originalWeight = [];
+            $('.newLine').each(function(index, element) {
+                let $el = $(element);
+                originalColors[index] = $el.css('color');
+                originalWeight[index] = $el.css('font-weight');
+                $el.css('color', 'rgb(225, 0, 0)');
+                $el.css('font-weight', '700');
+                $el.css('transition', 'font-weight 1s linear');
+            });
+            setTimeout(function() {
+                $('.newLine').each(function(index, element) {
+                    animateColor(this, 'rgb(225, 0, 0)', originalColors[index], 1000);
+                    $(element).css('font-weight', originalWeight[index]);
+                });
+                lastStringNumber = sNumber;
+            }, 2000);
+        } else {
+            lastStringNumber = sNumber;
+        }
+    }).fail(function() {
+        $("#logOutput").text("⚠️ Unable to load log file.");
+    });
+}
+function startPage() {
+    createNavBar();
+    createModalWindow();
+    loadLog();
+    setInterval(() => {
+        loadLog();
+    }, reloadInterval);
+    document.querySelector('.page').style.visibility = 'visible';
+};
+</script>
+<script src="/assets/js/load_assets.js"></script>
+</body>
+</html>

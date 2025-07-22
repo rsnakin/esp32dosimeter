@@ -1,0 +1,42 @@
+@font-face {
+  font-display: swap;
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/assets/fonts/montserrat/montserrat-v30-l-r.woff2') format('woff2');
+}
+@font-face {
+  font-display: swap;
+  font-family: 'Montserrat';
+  font-style: italic;
+  font-weight: 400;
+  src: url('/assets/fonts/montserrat/montserrat-v30-l-i.woff2') format('woff2');
+}
+@font-face {
+  font-display: swap;
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 600;
+  src: url('/assets/fonts/montserrat/montserrat-v30-l-600.woff2') format('woff2');
+}
+@font-face {
+  font-display: swap;
+  font-family: 'Montserrat';
+  font-style: italic;
+  font-weight: 600;
+  src: url('/assets/fonts/montserrat/montserrat-v30-l-600i.woff2') format('woff2');
+}
+@font-face {
+  font-display: swap;
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/assets/fonts/montserrat/montserrat-v30-l-700.woff2') format('woff2');
+}
+@font-face {
+  font-display: swap;
+  font-family: 'Montserrat';
+  font-style: italic;
+  font-weight: 700;
+  src: url('/assets/fonts/montserrat/montserrat-v30-l-700i.woff2') format('woff2');
+}

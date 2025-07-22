@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html class="notranslate">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="google" content="notranslate">
+    <title>&#9762; esp32dosimeter</title>
+    <style>
+        .navbar {
+            visibility: hidden;
+        }
+        .page {
+            visibility: hidden;
+        }
+    </style>
+</style>
+</head>
+<body>
+    <nav class="navbar navbar-light navbar-expand-lg fixed-top bg-success clean-navbar" style="background: rgb(25, 135, 84);">
+        <div class="container"><a class="navbar-brand fw-semibold logo" href="/" 
+            style="color: rgba(255,255,255,0.9);"><img src="/assets/imgs/rad.png"> esp32dosimeter</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navcol-1">-=MENU=-</div>
+        </div>
+    </nav>
+    <main class="page">
+        <section class="clean-block features">
+            <div class="container">
+                <div class="block-heading" style="padding-top:30px;">
+                    <h2 class="text-info"style="margin-bottom: -30px;">Registered Telegram Users</h2>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table" id="telegramTable">
+                </table>
+            </div>
+        </section>
+    </main>
+<script>
+function getData() {
+    $.ajax({
+        url:      '/api_telegram_list',
+        type:     'GET',
+        dataType: 'json',
+        timeout:  5000,
+        success: function (resp) {
+            let html = '<tbody><tr><td colspan="3"></td></tr>';
+            resp.forEach(item => {
+                html += '<tr><td style="text-align:right;width:50%;font-weight:bold;">@' + item.userName + '</td>' +
+                '<td style="width:15%;font-family:monospace;"><img src="/assets/imgs/telegrm.png">' +
+                ' ' + item.chatId + '</td><td style="width:35%;cursor:pointer;color:#cc0000;">' +
+                '<img src="/assets/imgs/rmuser.png" userId="' + 
+                item.chatId + '" userName="' + item.userName + '" class="rmUser"></td></tr>';
+            });
+            html += '</tbody>';
+            $('#telegramTable').html(html);
+            $('.rmUser').click(function(){
+                const myModal = new bootstrap.Modal(document.getElementById('modalTelegram'));
+                $('#TmodalCansel').text('Cansel');
+                $('#TmodalApply').show();
+                let userName = this.getAttribute('userName');
+                let chatId = this.getAttribute('userId');
+                $('#TmodContent').text('Delete user \'' + userName + '\'?');
+                $('#TmodalApply').one('click', function() {
+                    $.get('api_telegram_delete_user?chat_id=' + chatId, function(data) {
+                        if(data.result == 'ok') {
+                            $('#TmodContent').text('User \'' + userName + '\' has been deleted');
+                            getData();
+                        } else {
+                            $('#TmodContent').text('Failed to delete user \'' + userName + '\'');
+                        }
+                        $('#TmodalCansel').text('Ok');
+                        $('#TmodalApply').hide();
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        eModal.hide();
+                        const eModal = new bootstrap.Modal(document.getElementById('modal-1'));
+                        $('#modTitle').text('Error!');
+                        $('#modContent').html('Error: ' + (errorThrown || textStatus));
+                        eModal.show();
+                    });
+                });
+                myModal.show();
+            });
+        },
+        error: function (xhr, status, err) {
+            const myModal = new bootstrap.Modal(document.getElementById('modal-1'));
+            $('#modTitle').text('Error!');
+            $('#modContent').html('Error: ' + err);
+            myModal.show();
+        },
+        complete: function () {
+            ;
+        }
+    });
+}
+function createTelegramModalWindow() {
+    var modalWindow = '<div class="modal fade" role="dialog" tabindex="-1" id="modalTelegram">' +
+        '<div class="modal-dialog" role="document"><div class="modal-content">' +
+        '<div class="modal-header text-white bg-success">' +
+        '<h4 class="modal-title" id="TmodTitle">Delete user</h4><button type="button" class="btn-close" ' +
+        'data-bs-dismiss="modal" aria-label="Close"></button></div>' +
+        '<div class="modal-body" style="text-align:center;border-style: none;">' +
+        '<p id="TmodContent"></p></div>' +
+        '<div class="modal-footer" style="border-style: none;">' +
+        '<button id="TmodalApply" class="btn btn-light text-bg-danger" type="button">Delete</button>' +
+        '<button id="TmodalCansel" class="btn btn-light text-bg-success" type="button" ' +
+        'data-bs-dismiss="modal">Cansel</button></div>' +
+        '</div></div></div>';
+    $('body').append(modalWindow);
+}
+function startPage() {
+    createNavBar();
+    createModalWindow();
+    createTelegramModalWindow();
+    getData();
+    document.querySelector('.page').style.visibility = 'visible';
+};
+</script>
+<script src="/assets/js/load_assets.js"></script>
+</body>
+</html>

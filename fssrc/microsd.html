@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html class="notranslate">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="google" content="notranslate">
+    <title>&#9762; esp32dosimeter</title>
+    <style>
+        .navbar {
+            visibility: hidden;
+        }
+        .page {
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light navbar-expand-lg fixed-top bg-success clean-navbar" style="background: rgb(25, 135, 84);">
+        <div class="container"><a class="navbar-brand fw-semibold logo" href="/" 
+            style="color: rgba(255,255,255,0.9);"><img src="/assets/imgs/rad.png"> esp32dosimeter</a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navcol-1">-=MENU=-</div>
+        </div>
+    </nav>
+    <main class="page">
+        <section class="clean-block features">
+            <div class="container">
+                <div class="block-heading" style="padding-top:30px;">
+                    <h2 class="text-info" id="SDPath" style="margin-bottom: -20px;">microSD</h2>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table" id="SDTable">
+                </table>
+            </div>
+        </section>
+    </main>
+<script>
+var discUsageStr = '';
+function getData(dirName) {
+    $.ajax({
+        url:      '/api_sddirlist',
+        data: {
+            dir: dirName
+        },
+        type:     'GET',
+        dataType: 'json',
+        timeout:  5000,
+        success: function (resp) {
+            let html = '<tbody>';
+            html += '<tr><td colspan="2" id="diskUsage" style="text-align:center;font-weight:bold;font-family:monospace;">&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>';
+            if(dirName != '/') {
+                let upPath = dirName.substring(0, dirName.lastIndexOf("/"));
+                html += '<tr><td colspan="2" style="text-align:center;width:50%;cursor:pointer;font-weight:bold;" ' +
+                        'class="isDirectory" path="' + 
+                        (upPath == '' ? '/' : upPath) + '">&#8617;&nbsp;&nbsp;' +
+                        '<span style="text-decoration:underline;cursor:pointer;font-weight:bold;font-family:monospace;">' +
+                        'Up one level</span></td></tr>';
+            }
+            resp.forEach(item => {
+                if (item.type === 'directory') {
+                    html += '<tr><td style="text-align:right;width:50%;" ' +
+                        'class="isDirectory" path="' + dirName + (dirName != '/' ? '/' : '') + item.name + 
+                        '"><span style="text-decoration:underline;cursor:pointer;font-weight:bold;font-family:monospace;">' + item.name + 
+                        '/</span><span style="cursor:pointer;">&nbsp;&#128193;&nbsp;&nbsp;</span></td>' +
+                        '<td style="width:50%;font-family:monospace;">' + item.modified + ' | ' + item.type + '</td></tr>';
+                } else if (item.type === 'file') {
+                    let ext = item.name.toLowerCase().split('.').pop();
+                    let color = '';
+                    let icon = '&#128196;';
+                    if(ext == 'dat') {
+                        if(dirName == '/telegram') icon = '<img src="/assets/imgs/telegrm.png">';
+                        else icon = '&#128190;';
+                    }
+                    if(ext == 'txt' && dirName == '/logs') {
+                        icon = '&#128203;';
+                    }
+                    if(ext == 'png') {
+                        icon = '&#127912;';
+                    }
+                    if(ext == 'gz') {
+                        color = 'color:rgb(50, 100, 255);';
+                        icon = '&#128230;';
+                    }
+                    if(ext == 'json') {
+                        icon = '&#128736;';
+                    }
+                    if(ext == 'eot') {
+                        icon = '&#10002;';
+                    }
+                    if(ext == 'svg' || ext == 'ico') {
+                        icon = '&#127912;';
+                    }
+                    if(ext == 'woff' || ext == 'woff2' || ext == 'ttf') {
+                        icon = '&#128292;';
+                    }
+                    html += '<tr class="hoverable-row"><td style="text-align:right;width:50%;font-family:monospace;' + color + '">' + 
+                        item.name + '&nbsp;' + icon + '&nbsp;</td>' +
+                        '<td style="width:50%;font-family:monospace;">' + item.modified + ' | '  + formatBytes(item.size) + '</td></tr>';
+                }
+            });
+            html += '</tbody>';
+            $('#SDTable').html(html);
+            $('#SDPath').html('<span class="isDirectory" style="text-decoration:underline;cursor:pointer"' +
+            ' path="/">microSD</span> : ' + dirName);
+            $('.isDirectory').one('click', function () {
+                const path = this.getAttribute('path');
+                getData(path);
+            });
+            if(discUsageStr == '') {
+                getDiskUsage();
+            } else {
+                $('#diskUsage').text(discUsageStr);
+            }
+        },
+        error: function (xhr, status, err) {
+            const myModal = new bootstrap.Modal(document.getElementById('modal-1'));
+            $('#modTitle').text('Error!');
+            $('#modContent').html('Error: ' + err);
+            myModal.show();
+        },
+        complete: function () {
+            ;
+        }
+    });
+}
+function getDiskUsage() {
+    $.ajax({
+        url:      '/api_sddiskusage',
+        type:     'GET',
+        dataType: 'json',
+        timeout:  5000,
+        success: function (resp) {
+            let percents = Math.round(parseFloat(resp.used) * 100 / parseFloat(resp.total));
+            discUsageStr =
+            'Total: ' + formatBytes(resp.total) + ' ' +
+            'Used: ' + formatBytes(resp.used) + ' (' + percents + '%)';
+            $('#diskUsage').fadeOut(200, function () {
+                $(this).text(discUsageStr).fadeIn(200);
+            });
+        },
+        error: function (xhr, status, err) {
+            const myModal = new bootstrap.Modal(document.getElementById('modal-1'));
+            $('#modTitle').text('Error!');
+            $('#modContent').html('Error: ' + err);
+            myModal.show();
+        },
+        complete: function () {
+            ;
+        }
+    });
+}
+function startPage() {
+    createNavBar();
+    createModalWindow();
+    getData('/');
+    document.querySelector('.page').style.visibility = 'visible';
+};
+</script>
+<script src="/assets/js/load_assets.js"></script>
+</body>
+</html>
