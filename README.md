@@ -75,7 +75,7 @@ const WiFiCredentials WIFI_CREDENTIALS[] = {
 #define TIMEZONE_OFFSET_SEC 10800 // UTC+3
 #define RAD_THRESHOLD 0.3
 #define VOLTAGE_CORRECTION 1.05f
-
+```
 # 🚀 Usage Guide
 
 ## Flash and Run
