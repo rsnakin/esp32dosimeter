@@ -66,15 +66,14 @@
 ```cpp
 #define BOT_TOKEN "<your_telegram_bot_token>"
 #define OWNER_CHAT_ID "<your_chat_id>"
-#define WIFI_CREDENTIALS_COUNT 2
-const WiFiCredentials WIFI_CREDENTIALS[] = {
-  {"YourSSID", "YourPassword"},
-  {"BackupSSID", "BackupPassword"}
-};
-#define NTP_SERVER "pool.ntp.org"
-#define TIMEZONE_OFFSET_SEC 10800 // UTC+3
-#define RAD_THRESHOLD 0.3
-#define VOLTAGE_CORRECTION 1.05f
+
+#define WIFI_CREDENTIALS_INIT \
+{\
+    {"Wifi-1","password-1"},\
+     ...
+    {"Wifi-N","password-N"}\
+}
+
 ```
 # 🚀 Usage Guide
 
