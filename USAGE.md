@@ -20,7 +20,7 @@
 ## 📲 Telegram Commands
 
 | Command           | Description                     |
-|------------------|---------------------------------|
+|-------------------|---------------------------------|
 | `/start`          | Begin session                   |
 | `/help`           | List available commands         |
 | `/status`         | Show current readings           |
@@ -33,10 +33,10 @@
 
 ## 📡 REST API
 
-| Endpoint                        | Description                          |
-|----------------------------------|--------------------------------------|
-| `/api_data`                     | Current sensor data                  |
-| `/api_config`                   | Read current config                  |
+| Endpoint                       | Description                          |
+|--------------------------------|--------------------------------------|
+| `/api_data`                    | Current sensor data                  |
+| `/api_config`                  | Read current config                  |
 | `/api_saveconfig`              | Save config changes                  |
 | `/api_log?date=YYYY-MM-DD`     | Access daily logs                    |
 | `/api_telegram_list`           | List Telegram subscribers            |
